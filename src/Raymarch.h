@@ -2,7 +2,7 @@
 #define RAY_MARCH_H
 
 #include <string>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "Shader.h"
 #include "Scene.h"
@@ -14,10 +14,10 @@ class Raymarch : public Scene {
         void setSize(int width, int height);
         void setNearPlane(float nearPlane);
         void setFieldOfView(float vfieldOfView);
-        void setCameraMatrix(const glm::mat4& cameraMatrix);
+        void setCameraMatrix(glm::mat4 cameraMatrix);
         bool initScene() override;
         void renderScene() override;
-        void updateScene() override;
+        void updateScene(float t) override;
         void destroyScene() override;
         void resizeScene(int width, int height) override;
 
@@ -33,7 +33,7 @@ class Raymarch : public Scene {
         float nearPlane;
         float vfieldOfView;
 
-        std::string rootDir;
+        std::string m_rootDir;
         GLuint rgbVolumeTexture;
         GLuint alphaVolumeTexture;
         GLuint featureVolumeTexture;
@@ -52,7 +52,7 @@ class Raymarch : public Scene {
         static GLuint createDummyNetworkWeightTexture();
         static GLuint createNetworkWeightTexture(nlohmann::json networkWeights);
         static GLuint createFloatTextureFromData(int width, int height, float* data);
-        std::string createViewDependenceFunctions();
+        std::string createViewDependenceFunctions() const;
 
         static std::string digits(int d, int w);
         static std::string replaceAll(std::string str, const std::string& from, const std::string& to);

@@ -3,8 +3,11 @@
 
 #include <iostream>
 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 800;
+#include "Raymarch.h"
+#include "TrackballControls.h"
+
+const unsigned int SCR_WIDTH = 1280;
+const unsigned int SCR_HEIGHT = 720;
 
 #ifdef ENABLE_GLCHECKERROR
 GLenum glCheckError_(const char* file, int line)
@@ -29,6 +32,12 @@ GLenum glCheckError_(const char* file, int line)
 }
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 #endif // ENABLE_GLCHECKERROR
+
+void processInput(GLFWwindow* window){
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
+        glfwSetWindowShouldClose(window, true);
+    }
+}
 
 int main(int argc, char** argv){
     if (argc != 2) {
@@ -80,8 +89,44 @@ int main(int argc, char** argv){
         }, nullptr);
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     }
-   
-   
 
+    Raymarch scene;
+    scene.setRootDir(model_dir);
+    scene.setSize(SCR_WIDTH, SCR_HEIGHT);
+    scene.setFieldOfView(35.0f);
+    scene.setNearPlane(0.33f);
+    if (!scene.initScene()){
+        std::cerr << "Failed to initialize scene" << std::endl;
+        exit(-1);
+    }
 
+    float cx = 0.0f;
+    float cy = 1.0f;
+    float cz = -4.0f;
+    if ((bool)scene.globalSceneParams["ndc"]){
+        cz = -0.25f;
+    }
+
+    Camera3D cam3d(glm::vec3(cx, cy, cz));
+    cam3d.LookAt(glm::vec3(0.0f, 0.0f, 0.0f));
+    TrackballControls* controls = &TrackballControls::GetInstance(&cam3d, glm::vec4((float)SCR_WIDTH, (float)SCR_HEIGHT, 0.0f, 0.0f));
+    controls->Init(window);
+
+    while (!glfwWindowShouldClose(window)){
+        processInput(window);
+
+        controls->Update();
+        scene.setCameraMatrix(cam3d.m_viewMatr);
+        scene.updateScene(0.0f);
+        scene.renderScene();
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    scene.destroyScene();
+
+    glfwTerminate();
+    return 0;  
 }
+
